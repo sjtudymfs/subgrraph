@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+<meta charset="UTF-8" name="viewport">
+<title>subgraph</title>
+
+<style>
+body{
+    margin:0;
+    width:100%;
+    height:100%;
+}
+
+.link {
+  stroke: #000;
+  stroke-width: 1.5px;
+}
+
+.node {
+  cursor: move;
+  fill: #ccc;
+  stroke: #000;
+  stroke-width: 1.5px;
+}
+
+button{
+  outline: none;
+  border: none;
+
+  width:25%;
+  box-sizing: border-box;
+  padding:2px;
+
+  box-shadow: 1px 1px 1px #32dbc6;
+  background-color: #0cd4c7;
+  color: white;
+
+  font-size:18px;
+  font-weight:500;
+}
+
+.sub button{
+  outline: none;
+  border: none;
+
+  width: 30%;
+  box-sizing: border-box;
+  padding:2px;
+
+  vertical-align: middle;
+  margin-top: 2vh;
+  margin-bottom: 2vh;
+  margin-left:13vh;
+
+  box-shadow: 1px 1px 1px #32dbc6;
+  background-color: #0cd4c7;
+  color: white;
+
+  font-size:20px;
+  font-weight:600;
+}
+
+.active{
+  position: absolute;
+  right:0%;
+  height:500px;
+  width: 20%;
+  background: white;    
+  border-radius: 3px;    
+  border: 1px solid #eec;
+  
+}
+
+.dlg_top {    
+    position: relative;    
+    height: 35px;    
+    z-index: 3;    
+    background: #f3f3f3;    
+    border-top-left-radius: 3px;    
+    border-top-right-radius: 3px;    
+    border-bottom: 1px solid #eec;    
+    cursor: move;
+}
+/* 弹窗右上角 ico */
+.dlg_btn_ico {    
+    float: right;    
+    background: transparent;    
+    background-size: cover;    
+    width: 20px;    
+    height: 20px;    
+    cursor: pointer;    
+    margin-right: 15px;    
+    margin-top: 5px;    
+    background-repeat: no-repeat;
+}
+/* 弹窗右上角 ico 鼠标浮上去的样式 */
+.dlg_btn_ico:hover {    
+    background-color: #eee;
+}
+
+/* 关闭 */
+.dlg_btn_close_top {    
+    background-image: url("/static/bg.PNG");
+}
+
+/* 弹窗标题 */
+.dlg_title {    
+    line-height: 28px;    
+    margin-left: 5px;
+    font-size:larger;
+}
+/* 弹窗内容 */
+.dlg_content {    
+    position: relative;    
+    height: 470px;    
+    margin-right: 4px;
+    overflow-y: scroll;
+}
+
+table
+{
+    border-collapse: collapse;
+    width:98%;
+    margin-right: 1%;
+}
+.text{
+    width:95%;
+    border: 1px dashed #FF9900;
+}  
+
+table td, table th
+{
+    border: 1px solid #cad9ea;
+    color: #666;
+    height:5vh;
+}
+
+table thead th
+{
+    background-color: #CCE8EB;
+    width: auto;
+    text-align: left;
+}
+table tr:nth-child(odd)
+{
+    background: #fff;
+}
+table tr:nth-child(even)
+{
+    background: #F5FAFA;
+}
+
+</style>
+
+<body>
+  <div id='select' style="position:absolute;left:0%;width: 20%;height:100%;background-color: beige;">
+
+    <h1 style="text-align: center;">选区工具</h1>
+    
+    <div>
+      <hr style="border-bottom: 3px solid;">
+
+      <h2>节点模式变更：
+        <button id="fix" onclick=fix(0)>固定</button>
+        <button id="act" onclick=fix(1) style="display: none;">活动</button><br>
+      </h2>
+
+      <hr style="border-bottom: 3px solid;">
+    </div>
+      
+    <h2>基本框选：
+      <button onclick=enterSelect(1)>选择</button><br>
+    </h2>
+
+    <hr style="border-bottom: 3px solid;">
+
+    <h2>路径选择：
+      <button onclick=enterSelect(2)>选择</button>
+    </h2>
+
+    <hr style="border-bottom: 3px solid;">
+
+    <div class="sub" style="width: 100%;">
+      <h2>子结构匹配：</h2>
+      <hr style="border-bottom: 1px solid;">
+
+      <button onclick=getStr(1) id="chain">chain</button><br>
+      <hr id="chainhr" style="border-bottom: 1px solid;">
+
+      <button onclick=getStr(2) id="clique">clique</button><br>
+      <hr id="cliquehr" style="border-bottom: 1px solid;">
+
+      <button onclick=getStr(3) id="star">star</button><br>
+      <hr id="starhr" style="border-bottom: 1px solid;">
+
+      <button onclick=drawSub() id="subStart" style="width:50%;margin-left:9vh">自定义子结构</button><br>
+    </div>
+
+    <div id="sub" style="margin-top: -10vh;">
+      <h3 id="subTitle" style="display: none;text-align: center;">自定义子结构</h3>
+      <button onclick=addNode() id="addNode" style="display: none;margin-left: 2vh;">添加节点</button>
+      <button onclick=addLink() id="addLink" style="display: none;margin-left: 2vh;">添加连接</button>
+      <button onclick=confirm() id="subEnd" style="display: none;margin-left: 2vh;margin-bottom: 3vh;">确认</button>
+    </div>
+
+  </div>
+  
+  <div id='main' style="position:absolute;left:20%;width: 60%;height:100%;background-color: bisque;"></div>
+
+  <div class='active' id='active'>
+    <div id="dlg_top" class="dlg_top" >
+      <label class="dlg_title">匹配结果</label>                             
+      <input class="dlg_btn_close dlg_btn_ico dlg_btn_close_top" type="button" onclick=hideDialog() />
+    </div>
+    <div class="dlg_content" id="resultContent"></div>
+  </div>
+</body>
+
+<script src="/static/d3.js"></script>
+<script src="/static/init.js"></script>
+<script src="/static/selectGraph.js"></script>
+<script src="/static/match.js"></script>
+<script src='https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js'></script>
+
+<script>
+
+dealData();
+initDispaly()
+$("#active").bind("mousedown", moveHandler); 
+//displayTable({'sub':[[1,2,3],[2,3,4]]});
+
+function drawSub(){
+  control=3;
+
+  document.getElementById("chain").style.display="none";
+  document.getElementById("chainhr").style.display="none";
+
+  document.getElementById("clique").style.display="none";
+  document.getElementById("cliquehr").style.display="none";
+
+  document.getElementById("star").style.display="none";
+  document.getElementById("starhr").style.display="none";
+
+  document.getElementById("subStart").style.display="none";
+  
+  document.getElementById("subTitle").style.display="";
+  document.getElementById("addLink").style.display="";
+  document.getElementById("addNode").style.display="";
+  document.getElementById("subEnd").style.display="";
+
+  subInit();
+}
+
+function confirm(){
+  document.getElementById("chain").style.display="";
+  document.getElementById("chainhr").style.display="";
+
+  document.getElementById("clique").style.display="";
+  document.getElementById("cliquehr").style.display="";
+
+  document.getElementById("star").style.display="";
+  document.getElementById("starhr").style.display="";
+
+  document.getElementById("subStart").style.display="";
+  
+  document.getElementById("subTitle").style.display="none";
+  document.getElementById("addLink").style.display="none";
+  document.getElementById("addNode").style.display="none";
+  document.getElementById("subEnd").style.display="none";
+
+  postMatch();
+
+  d3.select("#subgraph").remove();
+  control=0;
+  tmpnodes=[];
+  tmplinks=[];
+  linkFlag=0;
+  first={};
+}
+
+document.onkeydown=function(event)
+{
+  if (shiftflag==0&&event.keyCode==0X10){
+    shiftflag=1;
+    //console.log(shiftflag)
+  }
+    
+}
+
+document.onkeyup=function(event)
+{
+  if (shiftflag==1&&event.keyCode==0X10){
+    shiftflag=0;
+    //console.log(shiftflag)
+  }
+    
+}
+
+function hideDialog(){
+    document.getElementById('active').style.display='none';
+}
+
+function moveHandler(evt) {    
+    var $trgt = $(event.target);    
+    if (!$trgt.hasClass("dlg_top")) return;    
+    var $this = $(this);    
+    var el = $this[0];    
+    var oevent = evt || event;    
+    var distanceX = oevent.clientX - el.offsetLeft;    
+    var distanceY = oevent.clientY - el.offsetTop;
+    $(document).bind("mousemove", function (evt) {        
+        var oevent = evt || event;
+        el.style.left = oevent.clientX - distanceX + 'px';
+        el.style.top = oevent.clientY - distanceY + 'px';
+    });
+    $(document).bind("mouseup", function () {
+        $(document).unbind("mousemove");
+        $(document).unbind("mouseup");
+    });
+}
+
+</script>
+
+</html>
